@@ -1,15 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
-import numpy as np
 import altair as alt
-
-chart_data = pd.DataFrame(np.abs(np.random.randn(20, 1)), columns=["a"])
-
-pie_data = pd.DataFrame({
-    'Category': ['Category A', 'Category B', 'Category C'],
-    'Values': [40, 35, 25]
-})
 
 st.set_page_config(
         page_title="Smart Spend", 
@@ -31,27 +23,20 @@ st.html(
 
 
 with st.form("my_form"):
-    customer_id = st.text_input("Customer ID:",max_chars=24,placeholder="Your 24 character customer is...")
+    account_id = st.text_input("Account number:",max_chars=24,placeholder="Your 24 account number is...")
 
     # Every form must have a submit button.
     submitted = st.form_submit_button("Submit")
     if submitted: 
-        if len(customer_id)!= 24:
-            st.error("Customer ID needs to be 24 characters.")
+        if len(account_id)!= 24:
+            st.error("Account number needs to be 24 characters.")
             submitted = False
-        url = 'http://api.nessieisreal.com/customers/{}/accounts?key={}'.format(customer_id,st.secrets['apiKey'])
-        response = requests.get(url)
-        if response.status_code != 200:
-            st.error(f"Request failed with status code {response.status_code}")
         else:
-            account_list = response.json()
-            account_ids = [x["_id"] for x in account_list]
             transactions = []
-            for acc_id in account_ids:
-                url = "http://api.nessieisreal.com/accounts/{}/purchases?key={}".format(acc_id,st.secrets['apiKey'])
-                response = requests.get(url)
-                if response.status_code == 200:
-                    transactions.extend(response.json())
+            url = "http://api.nessieisreal.com/accounts/{}/purchases?key={}".format(account_id,st.secrets['apiKey'])
+            response = requests.get(url)
+            if response.status_code == 200:
+                transactions.extend(response.json())
             
             amount = []
             category = []
@@ -86,8 +71,8 @@ if submitted:
         with col1:
             st.title("Streak 🔥")
             streak = 0
-            for i in range(len(chart_data)-1,0,-1):
-                if chart_data['a'][i] > chart_data['a'][i-1]:
+            for i in range(len(monthly_spend)-1,0,-1):
+                if monthly_spend['Total Spend'][i] > monthly_spend['Total Spend'][i-1]:
                     break
                 streak += 1
                 
@@ -102,6 +87,7 @@ if submitted:
             
         with col2:
             st.title("Promos")
+            
             
     with st.container(border=True):
         st.title("Your Spending Habits:")      
@@ -122,23 +108,3 @@ if submitted:
             # Display in Streamlit
             st.altair_chart(chart, use_container_width=True)
             
-            
-# # Chatbot
-# if "messages" not in st.session_state:
-#     st.session_state.messages = [
-#         {"role": "assistant", "content": 
-#             "How can I assist you today?"
-#             }
-#     ]  
-    
-# @st.dialog("Chatbot")
-# def chatbot():
-#     for message in st.session_state.messages:
-#         with st.chat_message(message["role"]):
-#             st.markdown(message["content"])
-            
-#     if prompt := st.chat_input("Say something..."):
-#         st.session_state.messages.append({"role": "user", "content": prompt})
-
-
-# chatbot()
